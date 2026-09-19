@@ -1,0 +1,51 @@
+# mslurm cluster profiles. `mslurm init` copies this to ~/.config/mslurm/clusters.yaml.
+#
+# Discover a cluster's values with:
+#   ssh HOST sinfo -o '%P %l %G'                     partitions, time limits, GPU types
+#   ssh HOST sacctmgr show assoc user=$USER -P       account and QOS
+
+# Used when -M/--cluster is not given (also $MSLURM_CLUSTER). Optional with one cluster.
+default: alpha
+
+clusters:
+  alpha:
+    # An ssh host name or ~/.ssh/config alias; key auth must already work.
+    host: alpha
+    # Only if the remote user differs from what ~/.ssh/config says.
+    # user: jdoe
+
+    # Everything mslurm writes on the cluster lives here:
+    #   <scratch>/code/<hash>   one immutable copy per code snapshot
+    #   <scratch>/jobs/<stamp>  one directory per job, the working dir of the job
+    scratch: ~/mslurm
+
+    # Put into every job's #SBATCH header.
+    account: my-account
+    qos: normal
+    partition: main
+
+    # Applied when the matching flag is not given. Keys are sbatch long options.
+    # Quote time values: YAML would read 4:00:00 as a number.
+    defaults:
+      time: "4:00:00"
+      cpus-per-task: 4
+      mem: 16G
+
+    # Optional short names for `-G`: `-G 3090:2` becomes --gres=gpu:rtx3090:2.
+    # Any name not listed here is used as the gres type as-is (`-G a5000`).
+    # An alias may also pin a partition: {type: rtx3080, partition: interactive}.
+    gpus:
+      "3090": rtx3090
+      "6000": rtx6000Ada
+      small: {type: rtx3080, partition: interactive}
+
+    # Runs inside the job, in the job's copy of your repository, before your command.
+    # This one builds the project's venv with uv and puts its python first on PATH.
+    setup: |
+      export PATH="$HOME/.local/bin:$PATH"
+      uv sync
+      export PATH="$(dirname "$(uv python find)"):$PATH"
+
+    # Extra environment for every job.
+    env:
+      WANDB_MODE: online
