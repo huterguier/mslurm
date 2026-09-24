@@ -49,6 +49,7 @@ mslurm queue                    # running, pending and recently finished jobs on
 mslurm logs alpha:154980 -f       # follow the output
 mslurm show alpha:154980
 mslurm pull alpha:154980          # outputs -> ./runs/alpha/154980/, never into the source tree
+mslurm pull alpha:154980 .        # outputs only, merged into the cwd (no logs or batch script)
 mslurm cancel alpha:154980
 mslurm clean                    # old job dirs and unused code snapshots (asks first)
 mslurm ssh alpha                  # a shell, useful once for hosts that need 2FA

@@ -12,14 +12,16 @@ from mslurm.ship import code_dir
 from mslurm.ssh import Remote, sh_path
 
 ALWAYS_EXCLUDE = [".venv/", "__pycache__/", "*.pyc", ".pytest_cache/", ".mypy_cache/", ".ruff_cache/"]
+BOOKKEEPING = ["/mslurm.sh", "/mslurm.json", "/mslurm.jobid", "/slurm-*.out"]
 
 
 def add_parser(sub):
     p = sub.add_parser("pull", help="fetch a job's outputs (files the job created or changed)")
     p.add_argument("job", metavar="JOB")
-    p.add_argument("dest", nargs="?", help="destination directory (default runs/<cluster>/<jobid>)")
+    p.add_argument("dest", nargs="?", help="destination directory (default runs/<cluster>/<jobid>); "
+                   "when given, the batch script and slurm logs are left out")
     p.add_argument("-M", "--cluster", help="cluster for a bare job id")
-    p.add_argument("--all", action="store_true", help="also copy the code snapshot the job ran from")
+    p.add_argument("--all", action="store_true", help="copy everything: the code snapshot, batch script and logs too")
     p.add_argument("--dry-run", action="store_true")
     p.set_defaults(run=run)
 
@@ -35,6 +37,8 @@ def run(args) -> int:
     dest = args.dest or os.path.join(_repo_root(), "runs", ref.cluster, ref.job_id)
 
     excludes = list(ALWAYS_EXCLUDE)
+    if args.dest and not args.all:
+        excludes += BOOKKEEPING
     if not args.all:
         meta = read_meta(remote, workdir)
         code = (rec and rec.code) or meta.get("code")
