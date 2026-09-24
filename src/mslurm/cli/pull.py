@@ -53,7 +53,7 @@ def run(args) -> int:
         exclude_file = f.name
     try:
         print(f"{ref}:{workdir} -> {dest}")
-        remote.rsync_from(workdir, dest, extra=[f"--exclude-from={exclude_file}", *extra])
+        remote.rsync_from(workdir, dest, extra=["--prune-empty-dirs", f"--exclude-from={exclude_file}", *extra])
     finally:
         os.unlink(exclude_file)
     return 0
